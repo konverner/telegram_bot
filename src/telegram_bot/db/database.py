@@ -1,9 +1,8 @@
 import datetime
-import logging
 import logging.config
 import os
 
-from dotenv import load_dotenv, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 from omegaconf import OmegaConf
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

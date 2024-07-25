@@ -1,12 +1,15 @@
 import os
 import telebot
-import logging
 import logging.config
 from dotenv import load_dotenv, find_dotenv
 from omegaconf import OmegaConf
 
-from telegram_bot.service.app import App
+from telegram_bot.service.llm import FireworksLLM
+from telegram_bot.service.vector_store import VectorStore
 from telegram_bot.db.database import log_message, add_user
+
+
+load_dotenv(find_dotenv(usecwd=True))  # Load environment variables from .env file
 
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(OmegaConf.load("./src/telegram_bot/conf/logging_config.yaml"), resolve=True)
@@ -26,7 +29,8 @@ if TOKEN is None:
 
 cfg = OmegaConf.load("./src/telegram_bot/conf/config.yaml")
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
-app = App("parameter")
+llm = FireworksLLM()
+vector_store = VectorStore()
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -42,12 +46,10 @@ def load_document(message):
         downloaded_file = bot.download_file(file_info.file_path)
         document_text = downloaded_file.decode('utf-8')
 
-        embedding = embedding_func.model.encode(document_text)
         # upsert to chromadb
-        collection.upsert(
-            ids=[str(idx)],
-            documents=document_text,
-            embeddings=embedding.tolist(),
+        vector_store.upsert_document(
+            idx=idx,
+            document_text=document_text
         )
         idx += 1
         bot.send_message(message.chat.id, "Документ загружен.")
@@ -58,10 +60,18 @@ def load_document(message):
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def ask_question(message):
     question = message.text
-    retriever_results = collection.query(query_texts=question, n_results=2)
+    retriever_results = vector_store.query(query_texts=question, n_results=2)
     document_text = retriever_results["documents"][0]
     response = llm.run(question, document_text)
     bot.send_message(message.chat.id, response)
+
+    logger.info(f"Received message: {message.text} from chat {message.from_user.username} ({message.chat.id})")
+    log_message(message.chat.id, message.text)
+    add_user(
+        message.chat.id, message.from_user.first_name,
+        message.from_user.last_name, message.from_user.username,
+        message.contact.phone_number if message.contact else None
+    )
 
 def start_bot():
     logger.info(f"bot `{str(bot.get_me().username)}` has started")
