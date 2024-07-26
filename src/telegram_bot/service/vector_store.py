@@ -1,23 +1,18 @@
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import chromadb
-from sentence_transformers import SentenceTransformer
-from chromadb import EmbeddingFunction, Documents, Embeddings
-
-
-class MyEmbeddingFunction(EmbeddingFunction):
-    def __init__(self,
-                 model_name=r'C:\Users\konst\PycharmProjects\telegram-bot\telegram_bot_recsys\models\rubert-base-cased-sentence'):
-        self.model = SentenceTransformer(model_name)
-
-    def __call__(self, input_docs: Documents) -> Embeddings:
-        batch_embeddings = self.model.encode(input_docs)
-        return batch_embeddings.tolist()
+import chromadb.utils.embedding_functions as embedding_functions
 
 
 class VectorStore:
     def __init__(self):
         self.client = chromadb.PersistentClient(path="./chromadb")
+        huggingface_ef = embedding_functions.HuggingFaceEmbeddingFunction(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
         self.collection = self.client.get_or_create_collection(
-            name="user_data", embedding_function=MyEmbeddingFunction()
+            name="user_data", embedding_function=huggingface_ef
         )
     def upsert_document(self, document_text: str, idx: int):
         embedding = self.collection.embedding_function([document_text])
