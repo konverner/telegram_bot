@@ -22,15 +22,15 @@ class FireworksLLM:
         API_KEY = os.getenv("API_KEY")
         self.client = fireworks.client
         fireworks.client.api_key = API_KEY
-        self.prompt = lambda query, document: f"Твоя задача ответить на ВОПРОС опираясь на ДОКУМЕНТ. ВОПРОС: {query} ДОКУМЕНТ: {document}"
+        self.prompt = lambda query, document_name, document_text: f"Твоя задача ответить на ВОПРОС опираясь на ДОКУМЕНТ. Процитируй название документа. ВОПРОС: {query} Название ДОКУМЕНТА: {document_name} Содержание ДОКУМЕНТа: {document_text}"
 
-    def run(self, query: str, document_text: str):
+    def run(self, query: str, document_text: str, document_name: str):
         completion = self.client.ChatCompletion.create(
             model="accounts/fireworks/models/llama-v3-70b-instruct",
             messages=[
                 {
                     "role": "user",
-                    "content": self.prompt(query, document_text[0])
+                    "content": self.prompt(query, document_name[0], document_text[0])
                 }
             ],
             max_tokens=200,

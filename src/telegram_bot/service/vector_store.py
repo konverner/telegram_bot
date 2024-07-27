@@ -14,17 +14,21 @@ class VectorStore:
     def __init__(self):
         self.client = chromadb.Client()
         self.embedding_func = SentenceTransformerEmbeddingFunction()
-        self.collection = self.client.get_or_create_collection(
-            name="user_data", embedding_function=self.embedding_func
+    def upsert_document(self, document_text: str, document_name: str, collection_name: str):
+        collection = self.client.get_or_create_collection(
+            name=collection_name, embedding_function=self.embedding_func
         )
-    def upsert_document(self, document_text: str, idx: int):
         embedding = self.embedding_func.model.encode([document_text])
-        self.collection.upsert(
-            ids=[str(idx)],
+        collection.upsert(
+            ids=[document_name],
             documents=document_text,
             embeddings=embedding,
         )
 
-    def query(self, question: str, n_results: int):
-        return self.collection.query(query_texts=question, n_results=n_results)
+    def query(self, question: str, n_results: int, collection_name: str):
+        collection = self.client.get_collection(collection_name, embedding_function=self.embedding_func)
+        return collection.query(query_texts=question, n_results=n_results)
 
+    def get_collection_content(self, collection_name: str):
+        collection = self.client.get_collection(collection_name)
+        return collection.get()["ids"]

@@ -21,3 +21,13 @@ class User(Base):
     last_name = Column(String)
     username = Column(String)
     phone_number = Column(String)
+
+
+class Document(Base):
+    __tablename__ = 'documents'
+
+    id = Column(Integer, primary_key=True)
+    document_text = Column(String)
+    document_name = Column(String)
+    user_id = Column(Integer)
+    upload_timestamp = Column(DateTime)

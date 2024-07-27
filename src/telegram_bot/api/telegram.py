@@ -11,7 +11,7 @@ from telegram_bot.service.exceptions import UnsupportedFileTypeException
 from telegram_bot.service.file_parser import FileParser
 from telegram_bot.service.llm import FireworksLLM
 from telegram_bot.service.vector_store import VectorStore
-from telegram_bot.db.database import log_message, add_user
+from telegram_bot.db.database import log_message, add_user, add_document
 
 
 load_dotenv(find_dotenv(usecwd=True))  # Load environment variables from .env file
@@ -47,7 +47,10 @@ def start(message):
 def load_document(message):
     global idx
     document = message.document
-    logger.info(f"Received document: {document.file_name} with type {document.mime_type} from chat {message.from_user.username} ({message.chat.id})")
+    logger.info(
+        f"[load_document] Received document: {document.file_name} with type"
+        f"{document.mime_type} from chat {message.from_user.username} ({message.chat.id})"
+    )
 
     file_info = bot.get_file(document.file_id)
     downloaded_file = bot.download_file(file_info.file_path)
@@ -61,7 +64,11 @@ def load_document(message):
             headers={"content-type": document.mime_type}
         )
         document_text = file_parser.extract_content(upload_file)
-        vector_store.upsert_document(document_text=document_text, idx=idx)
+        vector_store.upsert_document(
+            document_text=document_text,
+            document_name=document.file_name,
+            collection_name=message.from_user.username
+        )
 
         logger.info(f"Document {document.file_name} has been upserted to ChromaDB with idx {idx}")
         idx += 1
@@ -70,14 +77,27 @@ def load_document(message):
         logger.error(f"Document {document.file_name} has NOT been upserted to ChromaDB with idx {idx}")
         bot.send_message(message.chat.id, "Пожалуйста, загрузите текстовый файл (txt, doc, docx, pdf).")
 
-# Function to ask question about documents
+
+@bot.message_handler(commands=['get_docs'])
+def get_docs(message):
+    logger.info(f"[get_docs] Received message: '{message.text}' from chat {message.from_user.username} ({message.chat.id})")
+    documents = vector_store.get_collection_content(message.from_user.username)
+    documents_str = '\n'.join(documents)
+    response = f"Список ваших документов {documents_str}"
+    bot.send_message(message.chat.id, response)
+
+
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def ask_question(message):
     question = message.text
-    logger.info(f"Received message: '{message.text}' from chat {message.from_user.username} ({message.chat.id})")
-    retriever_results = vector_store.query(question, 1)
+    logger.info(
+        f"[ask_question] Received message: '{message.text}'"
+        f"from chat {message.from_user.username} ({message.chat.id})"
+    )
+    retriever_results = vector_store.query(question, 1, message.from_user.username)
     document_text = retriever_results["documents"][0]
-    response = llm.run(question, document_text)
+    document_name = retriever_results["ids"][0]
+    response = llm.run(question, document_text, document_name)
     bot.send_message(message.chat.id, response)
 
     log_message(message.chat.id, message.text)
@@ -86,6 +106,7 @@ def ask_question(message):
         message.from_user.last_name, message.from_user.username,
         message.contact.phone_number if message.contact else None
     )
+
 
 def start_bot():
     logger.info(f"bot `{str(bot.get_me().username)}` has started")

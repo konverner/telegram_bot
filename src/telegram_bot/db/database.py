@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .models import Base, Message, User
+from .models import Base, Message, User, Document
 
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(OmegaConf.load("./src/telegram_bot/conf/logging_config.yaml"), resolve=True)
@@ -60,3 +60,16 @@ def add_user(user_id, first_name, last_name, username, phone_number):
 	if not session.query(User).filter(User.user_id == user_id).first():
 		session.add(new_user)
 	session.commit()
+
+
+def add_document(user_id, document_text, document_name):
+	session = Session()
+	new_document = Document(
+		document_text=document_text,
+		document_name=document_name,
+		user_id=user_id,
+		upload_timestamp=datetime.datetime.now()
+	)
+	session.add(new_document)
+	session.commit()
+
