@@ -1,11 +1,18 @@
-from src.telegram_bot.service.app import App
+from telegram_bot.service.vector_store import VectorStore
 
-def test_app_run():
-    # Arrange
-    app = App("test parameter")
+def test_init():
+    vector_store = VectorStore()
+    assert vector_store.client is not None
+    assert vector_store.collection is not None
 
-    # Act
-    response = app.run("test message")
+def test_upsert_document():
+    vector_store = VectorStore()
+    document_text = "test document"
+    question = "test question"
+    idx = 1
 
-    # Assert
-    assert response == "Message text: test message\nApp's parameter: test parameter"
+    vector_store.upsert_document(document_text, idx)
+    results = vector_store.query(question, n_results=1)
+
+    assert len(results["documents"]) != 0, results
+
