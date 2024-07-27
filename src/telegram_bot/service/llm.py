@@ -25,16 +25,19 @@ class FireworksLLM:
         self.prompt = lambda query, document: f"Твоя задача ответить на ВОПРОС опираясь на ДОКУМЕНТ. ВОПРОС: {query} ДОКУМЕНТ: {document}"
 
     def run(self, query: str, document_text: str):
-        completion = self.client.Completion.create(
-            model="accounts/fireworks/models/mixtral-8x22b-instruct",
-            prompt=self.prompt(query, document_text[0]),
+        completion = self.client.ChatCompletion.create(
+            model="accounts/fireworks/models/llama-v3-70b-instruct",
+            messages=[
+                {
+                    "role": "user",
+                    "content": self.prompt(query, document_text[0])
+                }
+            ],
             max_tokens=200,
-            temperature=0.0,
+            temperature=0.6,
             presence_penalty=0,
             frequency_penalty=0,
             top_p=1,
             top_k=40
         )
-        logger.info(self.prompt(query, document_text[0]))
-        logger.info(completion)
-        return completion.choices[0].text
+        return completion.choices[0].message.content

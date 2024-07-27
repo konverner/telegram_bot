@@ -27,6 +27,7 @@ if TOKEN is None:
     logger.error("BOT_TOKEN is not set in the environment variables.")
     exit(1)
 
+idx = 1
 cfg = OmegaConf.load("./src/telegram_bot/conf/config.yaml")
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 llm = FireworksLLM()
@@ -41,31 +42,31 @@ def start(message):
 def load_document(message):
     global idx
     document = message.document
+    logger.info(f"Received document: {document.file_name} with type {document.mime_type} from chat {message.from_user.username} ({message.chat.id})")
     if document.mime_type == 'text/plain':
         file_info = bot.get_file(document.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         document_text = downloaded_file.decode('utf-8')
 
-        # upsert to chromadb
-        vector_store.upsert_document(
-            idx=idx,
-            document_text=document_text
-        )
+        vector_store.upsert_document(document_text=document_text, idx=idx)
+
+        logger.info(f"Document {document.file_name} has been upserted to ChromaDB with idx {idx}")
         idx += 1
         bot.send_message(message.chat.id, "Документ загружен.")
     else:
+        logger.error(f"Document {document.file_name} has NOT been upserted to ChromaDB with idx {idx}")
         bot.send_message(message.chat.id, "Пожалуйста, загрузите текстовый файл (txt).")
 
 # Function to ask question about documents
 @bot.message_handler(func=lambda message: True, content_types=['text'])
 def ask_question(message):
     question = message.text
-    retriever_results = vector_store.query(query_texts=question, n_results=2)
+    logger.info(f"Received message: '{message.text}' from chat {message.from_user.username} ({message.chat.id})")
+    retriever_results = vector_store.query(question, 1)
     document_text = retriever_results["documents"][0]
     response = llm.run(question, document_text)
     bot.send_message(message.chat.id, response)
 
-    logger.info(f"Received message: {message.text} from chat {message.from_user.username} ({message.chat.id})")
     log_message(message.chat.id, message.text)
     add_user(
         message.chat.id, message.from_user.first_name,
@@ -75,4 +76,4 @@ def ask_question(message):
 
 def start_bot():
     logger.info(f"bot `{str(bot.get_me().username)}` has started")
-    bot.infinity_polling()
+    bot.polling()
