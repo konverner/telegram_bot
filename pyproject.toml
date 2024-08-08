@@ -20,6 +20,7 @@ classifiers = [  #
 ]
 
 dependencies = [
+    "requests",
     "pyTelegramBotAPI==4.20.0",
     "omegaconf==2.3.0",
     "sqlalchemy==1.4.25",
