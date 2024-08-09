@@ -1,4 +1,2 @@
-telegram_bot:
-  token : "YOUR_BOT_TOKEN"
-application:
-  parameter: "value"
+endpoints:
+  normalize: "http://185.235.243.66:8000/api/normalize"
