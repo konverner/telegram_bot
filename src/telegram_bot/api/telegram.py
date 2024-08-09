@@ -48,16 +48,16 @@ def send_welcome(message):
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     logger.info(f"Received message: {message.text} from chat {message.from_user.username} ({message.chat.id})")
-    try:
-        api_response = requests.post(config.endpoints.normalize}, json={"user_input": message.text}, verify=False)
-        api_response.raise_for_status()  # Raise an exception for HTTP errors
-        response = api_response.json().get("response", "Error: Invalid response from the API")
-        logger.info(response)
-        bot.send_message(message.chat.id, json.dumps(response, indent=4))
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {e}")
-        bot.send_message(message.chat.id, "Failed to process your message. Please try again later.")
-    
+    bot.send_message(message.chat.id, "Запрос получен. Обработка ...")
+    api_response = requests.post(config.endpoints.normalize, json={"user_input": message.text}, verify=False)
+    api_response.raise_for_status()  # Raise an exception for HTTP errors
+    response = api_response.json().get("response", "Error: Invalid response from the API")
+    bot.send_message(
+        message.chat.id,
+        f"```json\n{str(json.dumps(response, indent=4, ensure_ascii=False))}\n```",
+        parse_mode="markdown"
+    )
+
     log_message(message.chat.id, message.text)
     add_user(
         message.chat.id, message.from_user.first_name,
