@@ -2,6 +2,7 @@ import os
 import telebot
 import logging
 import logging.config
+import json
 from dotenv import load_dotenv, find_dotenv
 from omegaconf import OmegaConf
 import requests
@@ -10,7 +11,7 @@ from telegram_bot.service.app import App
 from telegram_bot.db.database import log_message, add_user
 
 
-BASE_URL = "https://ominous-doodle-rp9qwqgvvvx35vjp-8000.app.github.dev"
+config = OmegaConf.load("src/telegram_bot/conf/config.yaml")
 
 # Load logging configuration with OmegaConf
 logging_config = OmegaConf.to_container(OmegaConf.load("./src/telegram_bot/conf/logging_config.yaml"), resolve=True)
@@ -48,11 +49,11 @@ def send_welcome(message):
 def handle_message(message):
     logger.info(f"Received message: {message.text} from chat {message.from_user.username} ({message.chat.id})")
     try:
-        api_response = requests.post(f"{BASE_URL}/api/normalize", json={"user_input": message.text}, verify=False)
+        api_response = requests.post(config.endpoints.normalize}, json={"user_input": message.text}, verify=False)
         api_response.raise_for_status()  # Raise an exception for HTTP errors
         response = api_response.json().get("response", "Error: Invalid response from the API")
         logger.info(response)
-        bot.send_message(message.chat.id, str(response))
+        bot.send_message(message.chat.id, json.dumps(response, indent=4))
     except requests.exceptions.RequestException as e:
         logger.error(f"API request failed: {e}")
         bot.send_message(message.chat.id, "Failed to process your message. Please try again later.")
