@@ -69,6 +69,19 @@ Change the language.
 3. Install the dependencies with `pip install .`.
 4. Run the bot with `python src/telegrab_bot/main.py`.
 
+## Templeting with Copier
+
+This repository also supports generating a new project using Copier.
+
+It will copy all the files, ask you configuration questions, and update the `.env` files with your answers.
+
+#### Install Copier
+You can install Copier with:
+
+```
+pip install copier
+```
+
 ## Docker
 
 To run this application in a Docker container, follow these steps:

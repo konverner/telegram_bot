@@ -1,0 +1,22 @@
+project_name:
+  type: str
+  help: The name of the project
+  default: telegram_bot
+
+module_name:
+  type: str
+  help: The name of the Python package
+  default: telegram_bot
+
+description:
+  type: str
+  help: description of the Python package
+  default: " "
+
+first_superuser_id:
+  type: int
+  help: Telegram ID of the first superuser (in .env)
+
+bot_token:
+  type: int
+  help: Telegram bot token (in .env)

@@ -1,0 +1,88 @@
+[build-system]  # it allows us to declare which build backend to use
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]  # project’s basic metadata, such as the dependencies, your name, etc.
+name = "{{module_name}}"
+version = "0.1.0"  #
+description = "{{description}}"
+readme = "README.md"
+
+classifiers = [  #
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "apscheduler",
+    "pyTelegramBotAPI==4.25.0",
+    "omegaconf==2.3.0",
+    "sqlalchemy==2.0.36",
+    "markitdown",
+    "langchain_fireworks",
+    "langchain_openai",
+    "langchain_core",
+    "Pillow",
+    "pandas",
+    "gspread",
+    "psycopg2-binary",
+    "python-dotenv",
+    "pytz",
+    "pydrive2",
+    "types-pytz"
+]
+
+[project.optional-dependencies]
+all = [
+    "pytest",  # testing framework
+    "mypy",  # static type checker
+    "ruff",  # linter and formatter
+    "pre-commit",  # managing and maintaining pre-commit hooks
+    "mkdocs-material",  # static site generator geared towards project documentation
+    "mkdocstrings[python]",  # mkdocstrings is a MkDocs plugin that generates documentation from docstrings
+]
+test = ["pytest"]
+docs = ["mkdocs-material", "mkdocstrings[python]"]
+mypy = ["mypy"]
+ruff = ["ruff"]
+
+[tool.setuptools]
+package-dir = { "" = "src" } #
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed", "*.yaml", "*.yml", "*.conf"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]  #
+testpaths = ["tests"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "A",    # flake8-builtins
+    "PLC",  # pylint conventions
+    "PLE",  # pylint errors
+    "PLW",  # pylint warnings
+    "UP",   # pyupgrade"
+    "S",    # flake8-bandit,
+    "B",    # flake8-bugbear
+    "I",    # isort
+    "D",    # pydocstyle
+    "NPY",  # NumPy-specific rules
+]
+ignore = ["E501", "D2", "D3", "D4", "D104", "D100", "D106", "S311"]
+exclude = ["tests/*"]
